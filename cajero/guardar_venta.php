@@ -1,19 +1,16 @@
 <?php
-// Datos de conexión a la base de datos
-$servername = "localhost"; // Cambia esto si tu servidor de base de datos tiene un nombre diferente
-$username = "root"; // Cambia esto por tu nombre de usuario de la base de datos
-$password = ""; // Cambia esto por tu contraseña de la base de datos
-$dbname = "cajero"; // Nombre de la base de datos
 
-// Crear conexión
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "cajero";
+
 $conn = new mysqli($servername, $username, $password, $dbname);
 
-// Verificar la conexión
 if ($conn->connect_error) {
     die("Error de conexión: " . $conn->connect_error);
 }
 
-// Insertar los datos en la base de datos
 if(isset($_POST['cajero']) && isset($_POST['cliente']) && isset($_POST['valor']) && isset($_POST['fecha'])) {
     $cajero = $_POST['cajero'];
     $cliente = $_POST['cliente'];
@@ -112,7 +109,7 @@ if(isset($_POST['cajero']) && isset($_POST['cliente']) && isset($_POST['valor'])
             font-style: italic;
         }
     </style>
-    <title>Usuarios</title>
+    <title>Reporte de Ventas</title>
 </head>
 <body>
     <div class="container">
@@ -142,22 +139,11 @@ if(isset($_POST['cajero']) && isset($_POST['cliente']) && isset($_POST['valor'])
         </form>
         <?php
             if(isset($_POST['from_date']) && isset($_POST['to_date'])) {
-                echo "<table>";
-                echo "<thead>";
-                echo "<tr class='bg-dark'>";
-                echo "<th>Cajero</th>";
-                echo "<th>Cliente</th>";
-                echo "<th>Valor</th>";
-                echo "<th>Fecha</th>";
-                echo "</tr>";
-                echo "</thead>";
-                echo "<tbody>";
-
                 $from_date = $_POST['from_date'];
                 $to_date = $_POST['to_date'];
                 $cajero_tipo = isset($_POST['cajero_tipo']) ? $_POST['cajero_tipo'] : '';
 
-                // Construir la consulta SQL con el filtro del tipo de cajero
+                // Construir la consulta SQL para obtener la cantidad de clientes distintos por cajero
                 $query = "SELECT cajero, cliente, valor, fecha FROM registro_ventas WHERE fecha BETWEEN '$from_date' AND '$to_date' ";
                 if (!empty($cajero_tipo)) {
                     $query .= "AND cajero = '$cajero_tipo' ";
@@ -165,6 +151,20 @@ if(isset($_POST['cajero']) && isset($_POST['cliente']) && isset($_POST['valor'])
                 $query_run = mysqli_query($conn, $query);
 
                 if(mysqli_num_rows($query_run) > 0) {
+                    echo "<table>";
+                    echo "<thead>";
+                    echo "<tr class='bg-dark'>";
+                    echo "<th>Cajero</th>";
+                    echo "<th>Cliente</th>";
+                    echo "<th>Valor</th>";
+                    echo "<th>Fecha</th>";
+                    echo "</tr>";
+                    echo "</thead>";
+                    echo "<tbody>";
+
+                    $total_valor = 0;
+                    $total_clientes = 0;
+
                     while($row = mysqli_fetch_assoc($query_run)) {
                         echo "<tr>";
                         echo "<td>".$row['cajero']."</td>";
@@ -172,10 +172,27 @@ if(isset($_POST['cajero']) && isset($_POST['cliente']) && isset($_POST['valor'])
                         echo "<td>".$row['valor']."</td>";
                         echo "<td>".$row['fecha']."</td>";
                         echo "</tr>";
+                        // Sumar el valor actual al total
+                        $total_clientes++;
+                        $total_valor += $row['valor'];
                     }
-                } else {
+
+                    echo "</tbody>";
+                    echo "</table>";
+
+                    // Mostrar la fila de suma total al final de la tabla
+                    echo "<table>";
+                    echo "<tfoot>";
                     echo "<tr>";
-                    echo "<td colspan='4'>No se encontraron resultados</td>";
+                    echo "<td colspan='2'><b>Total:</b></td>";
+                    echo "<td><b>$total_clientes</b></td>";
+                    echo "<td><b>$total_valor</b></td>";
+                    echo "<td></td>";
+                    echo "</tr>";
+                    echo "</tfoot>";
+                    echo "</table>";
+                } else {
+                    echo "<p>No se encontraron resultados</p>";
                     echo "</tr>";
                 }
 
